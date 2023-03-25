@@ -6,7 +6,7 @@ library(terra)
 library(sf)
 library(landscapemetrics)
 
-inRas <- rast("2021_Hubei_Re.tif")
+inRas <- rast("2020HBrec.tif")
 # check_landscape(inRas,verbose = TRUE)
 plot(inRas)
 
@@ -14,7 +14,7 @@ plot(inRas)
 # rawGrid <- st_make_grid(x = inVec,cellsize = 10000,what = "polygons",square = TRUE)
 
 # samplePoint <- st_read("HubeiSP10km.shp")
-samplePoint <- st_read("HubeiSP3km.shp")
+samplePoint <- st_read("HubeiSP5km.shp")
 plot(samplePoint)
 
 # selected lsm: 
@@ -22,23 +22,28 @@ plot(samplePoint)
 # ndca, tca, area_cv, ed, gyrate_cv, te, cohesion, division, lsi, pladj
 # pafrac with multiple NA
 # issue: cannot calculate by using level and metric
+
+#!!!!!!!!remember to update when scale changed!!!!!!!!!
+gridLength <- 5000
 metric <- sample_lsm(inRas,
                      y = samplePoint,
                      level = "class",
-                     # metric = c('circle', 'contig', 'frac', 'para', 'shape'),
-                     type = "shape metric",
-                     # what = c(
-                     #   "lsm_c_pafrac",
-                     #   "lsm_c_ca",
-                     #   "lsm_c_pland",
-                     #   "lsm_c_ai",
-                     #   "lsm_c_np",
-                     #   "lsm_c_split",
-                     #   "lsm_c_lpi"
-                     #   ),
+                     metric = c(
+                       'contig',
+                       'frac',
+                       'shape',
+                       'area',
+                       'ed',
+                       'pland',
+                       'ai',
+                       'cohesion',
+                       'lsi',
+                       'np'
+                       ),
+                     # type = "shape metric",
                      plot_id = samplePoint$GRID_ID,
                      shape = "square",
-                     size = 1500,#!!!!!!!!remember to update when scale changed!!!!!!!!!
+                     size = gridLength/2,
                      all_classes = FALSE,
                      directions = 8,
                      neighbourhood = 8,
@@ -64,9 +69,8 @@ metric2 <- dplyr::filter(metric2, class == 1)
 metric2 <- pivot_wider(data = metric2,names_from = metric,values_from = value)
 outGrid <- merge(x = samplePoint,y = metric2,by.x="GRID_ID",by.y="plot_id",all.x=TRUE)
 
-plot(outGrid)
-plot(outGrid["np"])
 plot(outGrid, max.plot = 30)
+plot(outGrid["shape_sd"])
 
 # corr
 corr <- calculate_correlation(metrics = metric,method = "pearson")
@@ -74,3 +78,4 @@ show_correlation(data = corr,method = "pearson")
 
 # reset environment
 rm(metric, metric2, outGrid)
+
