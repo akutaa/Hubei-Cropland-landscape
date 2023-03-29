@@ -1,4 +1,5 @@
 library(conflicted)
+library(parallel)
 library(magrittr)
 library(tidyverse)
 library(tidyr)
@@ -16,7 +17,8 @@ setwd("E:/Code/data/")
 selsm <- function(yr, scl)
 {
   print(paste('start',yr,scl,'km','...',sep = ' '))
-  inRas <- rast(paste0('CLCD',yr,'_200m.tif'))
+  inRas <- rast(paste0('CLCD',yr,'_200m_01.tif'))
+  print(paste0('read ','CLCD',yr,'_200m_01.tif','...'))
   fishnet <- st_read(paste0('net',scl,'km.shp'))
   mtrc <- sample_lsm(landscape = inRas,
                      y = fishnet,
@@ -42,24 +44,18 @@ selsm <- function(yr, scl)
   print(paste0(yr,' ',scl,'km complete!'))
 }
 
+
+yrlist <- c(2000, 2005, 2010, 2015, 2020)
 scllist <- c(3:10)
-yrlist <- list(2000,2005,2010,2015,2020)
 
-for (yr in yrlist){
-  for (scl in scllist){
-    selsm(yr,scl)
-  }
-}
+cl.cores <- detectCores()
+cl <- makeCluster(cl.cores)
+
+t1 <- Sys.time()
+parLapply(scllist, function(scl){mapply(selsm, yrlist, scl)},cl = cl)
+t2 <- Sys.time()
+timeuse <- t2-t1
+print(timeuse)
 
 
-# batch generate points for gd
-GD_point <- function(r){
-  load(paste0('2020_',r,'_mtc.RData'))
-  m <- dplyr::filter(metric, class == 1) %>%
-    pivot_wider(names_from = metric,values_from = value) %>% 
-    select(-c(layer,level,class,id))
-  p <- st_read(paste0('HubeiSP',r,'.shp')) %>%
-    merge(y = m,by.x="GRID_ID",by.y="plot_id",all.x=TRUE) %>%
-    st_write(paste0('P_',r,'.shp'))
-}
 
