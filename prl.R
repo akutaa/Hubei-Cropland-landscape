@@ -1,6 +1,5 @@
 library(conflicted)
-# library(parallel)
-library(snowfall)
+library(parallel)
 library(magrittr)
 library(tidyverse)
 library(tidyr)
@@ -14,6 +13,8 @@ library(landscapemetrics)
 # aggregation metric: ai, lsi, pd
 
 setwd("E:/Code/data/")
+cl.cores <- detectCores()
+cl <- makeCluster(cl.cores)
 
 selsm <- function(yr, scl)
 {
@@ -34,7 +35,7 @@ selsm <- function(yr, scl)
                      directions = 8,
                      neighbourhood = 8,
                      progress = TRUE
-                     )
+  )
   print(paste0(yr,' ',scl,'km calc done!'))
   save(mtrc,file = paste0(yr,'_',scl,'km.RData'))
   mtrc2 <- mtrc
@@ -45,35 +46,12 @@ selsm <- function(yr, scl)
   print(paste0(yr,' ',scl,'km complete!'))
 }
 
-
-yrlist <- c(2000, 2005, 2010, 2015, 2020)
 scllist <- c(3:10)
-
-sfInit(parallel = TRUE,cpus = 10)
-sfLibrary(magrittr)
-sfLibrary(tidyverse)
-sfLibrary(tidyr)
-sfLibrary(terra)
-sfLibrary(sf)
-sfLibrary(landscapemetrics)
-sfExport('yrlist','scllist','selsm')
-
-t1 <- Sys.time()
-
-sfLapply(scllist, function(scl){mapply(selsm, yrlist, scl)})
-
-t2 <- Sys.time()
-timeuse <- t2-t1
-print(timeuse)
-sfStop()
-
-# cl.cores <- detectCores()
-# cl <- makeCluster(cl.cores)
-# t1 <- Sys.time()
-# parLapply(scllist, function(scl){mapply(selsm, yrlist, scl)},cl = cl)
-# t2 <- Sys.time()
-# timeuse <- t2-t1
-# print(timeuse)
-# stopCluster(cl)
+yrlist <- list(2000,2005,2010,2015,2020)
 
 
+for (yr in yrlist){
+  for (scl in scllist){
+    selsm(yr,scl)
+  }
+}
