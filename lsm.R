@@ -67,13 +67,4 @@ timeuse <- t2-t1
 print(timeuse)
 sfStop()
 
-# cl.cores <- detectCores()
-# cl <- makeCluster(cl.cores)
-# t1 <- Sys.time()
-# parLapply(scllist, function(scl){mapply(selsm, yrlist, scl)},cl = cl)
-# t2 <- Sys.time()
-# timeuse <- t2-t1
-# print(timeuse)
-# stopCluster(cl)
-
 

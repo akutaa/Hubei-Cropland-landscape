@@ -1,11 +1,13 @@
 library(conflicted)
-library(parallel)
+# library(parallel)
+library(snowfall)
 library(magrittr)
 library(tidyverse)
 library(tidyr)
 library(terra)
 library(sf)
 library(landscapemetrics)
+library(GD)
 
 # shape metric: contig, frac, shape, 
 # core area metric: cai, dcad, 
@@ -13,9 +15,7 @@ library(landscapemetrics)
 # aggregation metric: ai, lsi, pd
 
 setwd("E:/Code/data/")
-cl.cores <- detectCores()
-cl <- makeCluster(cl.cores)
-
+# size effect of lsm
 selsm <- function(yr, scl)
 {
   print(paste('start',yr,scl,'km','...',sep = ' '))
@@ -46,12 +46,24 @@ selsm <- function(yr, scl)
   print(paste0(yr,' ',scl,'km complete!'))
 }
 
+
+yrlist <- c(2000, 2005, 2010, 2015, 2020)
 scllist <- c(3:10)
-yrlist <- list(2000,2005,2010,2015,2020)
 
+sfInit(parallel = TRUE,cpus = 10)
+sfLibrary(magrittr)
+sfLibrary(tidyverse)
+sfLibrary(tidyr)
+sfLibrary(terra)
+sfLibrary(sf)
+sfLibrary(landscapemetrics)
+sfExport('yrlist','scllist','selsm')
 
-for (yr in yrlist){
-  for (scl in scllist){
-    selsm(yr,scl)
-  }
-}
+t1 <- Sys.time()
+
+sfLapply(scllist, function(scl){mapply(selsm, yrlist, scl)})
+
+t2 <- Sys.time()
+timeuse <- t2-t1
+print(timeuse)
+sfStop()
